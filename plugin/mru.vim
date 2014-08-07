@@ -353,6 +353,10 @@ function! s:MRU_LoadList()
         elseif s:MRU_files[0] =~# '^#'
             " Remove the comment line
             call remove(s:MRU_files, 0)
+
+            " Capitalize drive letter to help reduce duplicate files
+            call map(s:MRU_files, 'substitute(v:val, "^[a-z]:", "\\U&", "")')
+
         else
             " Unsupported format
             let s:MRU_files = []
@@ -368,6 +372,9 @@ endfunction
 " MRU_SaveList                          {{{1
 " Saves the MRU file names to the MRU file
 function! s:MRU_SaveList()
+    " pjo
+    call map(s:MRU_files, 'substitute(v:val, "^[a-z]:", "\\U&", "")')
+
     let l = []
     call add(l, '# Most recently edited files in Vim (version 3.0)')
     call extend(l, s:MRU_files)
@@ -415,7 +422,7 @@ function! s:MRU_AddFile(acmd_bufnr)
     " readable then ignore it
     let idx = index(s:MRU_files, fname)
     if idx == -1
-        if !filereadable(fname)
+        if fname !~# "^ftp:" && !filereadable(fname)
             " File is not readable and is not in the MRU list
             return
         endif
@@ -423,6 +430,9 @@ function! s:MRU_AddFile(acmd_bufnr)
 
     " Load the latest MRU file list
     call s:MRU_LoadList()
+
+    " Capitalize drive letter to help reduce duplicate files
+    let fname = substitute(fname, "^[a-z]:", "\\U&", "")
 
     " Remove the new file name from the existing MRU list (if already present)
     call filter(s:MRU_files, 'v:val !=# fname')
